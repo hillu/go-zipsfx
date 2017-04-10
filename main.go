@@ -11,13 +11,18 @@ import (
 	"path/filepath"
 )
 
-func findSig(buf []byte) int64 {
-	// var signature = []byte{0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x00}
-	var signature = []byte{175, 180, 252, 251, 235, 255, 247, 255}
-	for i := range signature {
-		signature[i] = signature[i] ^ 0xff
+func findSig(buf []byte) (result []int) {
+	signature := []byte{0x50, 0x4b, 0x03, 0x04}
+	var i, n int
+	for {
+		if n = bytes.Index(buf[i:], signature); n == -1 {
+			break
+		}
+		r := n + i
+		result = append(result, r)
+		i = r + 1
 	}
-	return int64(bytes.Index(buf, signature))
+	return
 }
 
 func main() {
@@ -33,15 +38,16 @@ func main() {
 		log.Print(err)
 		os.Exit(1)
 	}
-	i := findSig(m)
-	if i == -1 {
-		log.Print("ZIP header not found")
-		os.Exit(1)
+	var zr *zip.Reader
+	for _, i := range findSig(m) {
+		s := int64(len(m) - i)
+		if zr, err = zip.NewReader(io.NewSectionReader(f, int64(i), s), s); err != nil {
+			continue
+		}
+		break
 	}
-	s := int64(len(m)) - i
-	zr, err := zip.NewReader(io.NewSectionReader(f, i, s), s)
-	if err != nil {
-		log.Print(err)
+	if zr == nil {
+		log.Print("ZIP header not found")
 		os.Exit(1)
 	}
 	for _, f := range zr.File {
