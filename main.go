@@ -47,7 +47,7 @@ func main() {
 		break
 	}
 	if zr == nil {
-		log.Print("ZIP header not found")
+		log.Printf("%s: ZIP header not found", os.Args[0])
 		os.Exit(1)
 	}
 	for _, f := range zr.File {
