@@ -61,6 +61,12 @@ func main() {
 				log.Print(err)
 				continue
 			}
+			if dir := filepath.Dir(path); dir != "." {
+				if err := os.MkdirAll(dir, 0777); err != nil {
+					log.Print(err)
+					continue
+				}
+			}
 			of, err := os.OpenFile(
 				path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
